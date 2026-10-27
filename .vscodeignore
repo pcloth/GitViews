@@ -9,6 +9,7 @@ node_modules/**
 src/**
 test/**
 scripts/**
+design/**
 tsconfig.json
 pnpm-lock.yaml
 pnpm-workspace.yaml

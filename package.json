@@ -1,10 +1,11 @@
 {
-  "name": "git-views",
-  "displayName": "GitViews",
-  "description": "GitViews brings Git graph and commit history to the sidebar, with inline blame, commit diffs, and clickable terminal commit links.",
-  "version": "0.1.0",
+  "name": "gitviews-sidebar",
+  "displayName": "GitViews Sidebar",
+  "description": "GitViews Sidebar brings Git graph and commit history to the sidebar, with inline blame, commit diffs, and clickable terminal commit links.",
+  "version": "1.0.1",
   "publisher": "pcloth",
   "license": "MIT",
+  "icon": "media/marketplace-icon.png",
   "repository": { "type": "git", "url": "https://github.com/pcloth/GitViews.git" },
   "homepage": "https://github.com/pcloth/GitViews#readme",
   "bugs": { "url": "https://github.com/pcloth/GitViews/issues" },
@@ -21,10 +22,11 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
+    "check:icon": "node scripts/check-icon.mjs",
     "check": "tsc --noEmit",
     "test": "node scripts/test.mjs",
-    "vscode:prepublish": "pnpm run check && pnpm run build",
-    "package": "vsce package --no-dependencies --out git-views-0.1.0.vsix"
+    "vscode:prepublish": "pnpm run check:icon && pnpm run check && pnpm run build",
+    "package": "vsce package --no-dependencies"
   },
   "contributes": {
     "viewsContainers": { "activitybar": [{ "id": "gitViews", "title": "GitViews", "icon": "media/icon.svg" }] },

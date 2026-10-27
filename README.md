@@ -1,6 +1,6 @@
-# GitViews
+# GitViews Sidebar
 
-GitViews 将 Git 提交历史放在 VS Code 主侧栏，并通过当前行 blame 和终端提交 ID 快速定位修改。
+GitViews Sidebar 将 Git 提交历史放在 VS Code 主侧栏，并通过当前行 blame 和终端提交 ID 快速定位修改。
 
 ## 功能
 
@@ -45,10 +45,12 @@ pnpm build
 
 ```powershell
 pnpm package
-code --install-extension .\git-views-0.1.0.vsix
+code --install-extension .\gitviews-sidebar-1.0.1.vsix
 ```
 
-如果没有配置 `code` 命令，使用扩展页右上角菜单中的“从 VSIX 安装”。插件标识为 `pcloth.git-views`，商店展示名称为 `GitViews`。发布到 Marketplace 后，可使用 `GitViews` 搜索，或通过完整标识查找。
+如果没有配置 `code` 命令，使用扩展页右上角菜单中的“从 VSIX 安装”。插件标识为 `pcloth.gitviews-sidebar`，商店展示名称为 `GitViews Sidebar`。发布到 Marketplace 后，可使用 `GitViews` 搜索，或通过完整标识查找。
+
+原商店条目已删除，因此使用新的内部名称和展示名称重新发布。若本机安装过先前的测试包（`git-views-local.git-views`、`pcloth.git-views` 或 `pcloth.pcloth-gitviews`），请先卸载它们并重载窗口，以免重复的历史面板入口冲突。今后在新商店条目中使用 Update 更新版本。
 
 macOS/Linux 同样使用 `pnpm install --frozen-lockfile`；使用 Volta 时在 shell 配置中设置 `export VOLTA_FEATURE_PNPM=1`。
 
