@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- Add three Chinese feature illustrations to the README: sidebar commit history, inline blame, and integrated terminal navigation.
+
 ## 1.0.1
 
 - Replace the sidebar branch icon with a speech-bubble history list representing commit details and blame hints.

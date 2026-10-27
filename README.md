@@ -12,6 +12,26 @@ GitViews Sidebar 将 Git 提交历史放在 VS Code 主侧栏，并通过当前�
 
 历史默认包含本地已有的全部分支、远程引用和标签，不自动 fetch。若跳转目标不在已加载列表中，会显示以目标提交为起点的祖先历史，点击“返回”恢复原筛选与历史。搜索针对完整历史中的提交说明和作者；查找 SHA 使用工具栏的 `#`。
 
+## 功能示意
+
+### 提交历史，留在侧栏
+
+在左侧浏览分支拓扑与提交详情，点击变更文件，用原生差异编辑器查看修改。
+
+![侧栏提交历史与原生文件差异示意图](media/features/sidebar-history.png)
+
+### 这一行，谁改过？
+
+当前行末显示作者、时间与提交摘要；悬停展开详情，可跳转到提交或对应文件差异。
+
+![当前行 blame 与悬停提交详情示意图](media/features/inline-blame.png)
+
+### 从终端，直达提交
+
+在内置终端按 Ctrl/Cmd 点击提交 ID，打开侧栏并定位提交，展示详情及变更文件列表。
+
+![内置终端点击提交 ID 跳转到侧栏示意图](media/features/terminal-jump.png)
+
 ## Windows 开发与安装（Volta + pnpm）
 
 要求 VS Code **1.100.0 或以上**、系统已安装 Git。工具链固定在 `package.json`：
@@ -45,7 +65,7 @@ pnpm build
 
 ```powershell
 pnpm package
-code --install-extension .\gitviews-sidebar-1.0.1.vsix
+code --install-extension .\gitviews-sidebar-1.0.2.vsix
 ```
 
 如果没有配置 `code` 命令，使用扩展页右上角菜单中的“从 VSIX 安装”。插件标识为 `pcloth.gitviews-sidebar`，商店展示名称为 `GitViews Sidebar`。发布到 Marketplace 后，可使用 `GitViews` 搜索，或通过完整标识查找。
