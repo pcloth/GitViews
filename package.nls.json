@@ -1,0 +1,13 @@
+{
+  "view.history": "History",
+  "command.open": "Open History",
+  "command.reveal": "Go to Commit…",
+  "command.refresh": "Refresh",
+  "command.compare": "Compare Commits…",
+  "command.blame": "Toggle Current Line Blame",
+  "config.blame": "Show commit information after the current line.",
+  "config.template": "Line blame template. Variables: ${author}, ${dateAgo}, ${date}, ${subject}, ${sha}.",
+  "config.pageSize": "Number of history commits to load per page.",
+  "config.links": "Make commit hashes in the integrated terminal clickable.",
+  "color.blame": "Foreground color of current line blame."
+}

@@ -1,0 +1,16 @@
+.agents/**
+.aws/**
+.codex/**
+.git/**
+.vscode/**
+.vscode-test/**
+.test-out/**
+node_modules/**
+src/**
+test/**
+scripts/**
+tsconfig.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+*.vsix
+**/*.map

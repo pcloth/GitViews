@@ -1,0 +1,13 @@
+{
+  "view.history": "提交历史",
+  "command.open": "打开提交历史",
+  "command.reveal": "定位提交…",
+  "command.refresh": "刷新",
+  "command.compare": "比较提交…",
+  "command.blame": "切换当前行提交信息",
+  "config.blame": "在当前行末显示提交信息。",
+  "config.template": "行内提交信息模板。变量：${author}、${dateAgo}、${date}、${subject}、${sha}。",
+  "config.pageSize": "每页加载的提交数量。",
+  "config.links": "允许点击内置终端中的提交 ID。",
+  "color.blame": "当前行提交信息的文字颜色。"
+}

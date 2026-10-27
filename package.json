@@ -1,0 +1,58 @@
+{
+  "name": "git-views",
+  "displayName": "GitViews",
+  "description": "GitViews brings Git graph and commit history to the sidebar, with inline blame, commit diffs, and clickable terminal commit links.",
+  "version": "0.1.0",
+  "publisher": "pcloth",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/pcloth/GitViews.git" },
+  "homepage": "https://github.com/pcloth/GitViews#readme",
+  "bugs": { "url": "https://github.com/pcloth/GitViews/issues" },
+  "keywords": ["gitviews", "git", "git graph", "git history", "git blame", "sidebar", "commit", "terminal"],
+  "volta": { "node": "22.22.3", "pnpm": "10.11.0" },
+  "packageManager": "pnpm@10.11.0",
+  "engines": { "vscode": "^1.100.0" },
+  "categories": ["SCM Providers", "Visualization"],
+  "extensionKind": ["workspace"],
+  "extensionDependencies": ["vscode.git"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "capabilities": { "untrustedWorkspaces": { "supported": false }, "virtualWorkspaces": { "supported": false } },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "check": "tsc --noEmit",
+    "test": "node scripts/test.mjs",
+    "vscode:prepublish": "pnpm run check && pnpm run build",
+    "package": "vsce package --no-dependencies --out git-views-0.1.0.vsix"
+  },
+  "contributes": {
+    "viewsContainers": { "activitybar": [{ "id": "gitViews", "title": "GitViews", "icon": "media/icon.svg" }] },
+    "views": { "gitViews": [{ "id": "gitViews.history", "name": "%view.history%", "type": "webview", "icon": "media/icon.svg" }] },
+    "commands": [
+      { "command": "gitViews.open", "title": "%command.open%", "category": "GitViews", "icon": "$(git-commit)" },
+      { "command": "gitViews.revealCommit", "title": "%command.reveal%", "category": "GitViews" },
+      { "command": "gitViews.refresh", "title": "%command.refresh%", "category": "GitViews", "icon": "$(refresh)" },
+      { "command": "gitViews.compare", "title": "%command.compare%", "category": "GitViews" },
+      { "command": "gitViews.toggleBlame", "title": "%command.blame%", "category": "GitViews" }
+    ],
+    "menus": { "view/title": [{ "command": "gitViews.refresh", "when": "view == gitViews.history", "group": "navigation" }] },
+    "configuration": {
+      "title": "GitViews",
+      "properties": {
+        "gitViews.blame.enabled": { "type": "boolean", "default": true, "description": "%config.blame%" },
+        "gitViews.blame.template": { "type": "string", "default": "${author}, ${dateAgo} • ${subject}", "description": "%config.template%" },
+        "gitViews.history.pageSize": { "type": "number", "default": 200, "minimum": 20, "maximum": 1000, "description": "%config.pageSize%" },
+        "gitViews.terminalLinks.enabled": { "type": "boolean", "default": true, "description": "%config.links%" }
+      }
+    },
+    "colors": [{ "id": "gitViews.blameForeground", "description": "%color.blame%", "defaults": { "dark": "#99999999", "light": "#666666BB", "highContrast": "#FFFFFF", "highContrastLight": "#000000" } }]
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/vscode": "1.100.0",
+    "@vscode/vsce": "3.6.0",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
+  }
+}
