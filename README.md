@@ -65,7 +65,7 @@ pnpm build
 
 ```powershell
 pnpm package
-code --install-extension .\gitviews-sidebar-1.0.2.vsix
+code --install-extension .\gitviews-sidebar-1.0.3.vsix
 ```
 
 如果没有配置 `code` 命令，使用扩展页右上角菜单中的“从 VSIX 安装”。插件标识为 `pcloth.gitviews-sidebar`，商店展示名称为 `GitViews Sidebar`。发布到 Marketplace 后，可使用 `GitViews` 搜索，或通过完整标识查找。

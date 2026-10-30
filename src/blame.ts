@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import type { BlameLine, Commit } from './core/types';
 import { Repositories } from './repositories';
 import { isChinese, t } from './i18n';
+import { commandUri } from './core/commandUri';
 
 export class BlameController implements vscode.Disposable {
   private readonly decoration = vscode.window.createTextEditorDecorationType({
@@ -100,9 +101,9 @@ export class BlameController implements vscode.Disposable {
   private hover(line: BlameLine, repositoryUri: string, hover: vscode.MarkdownString, commit?: Commit): vscode.MarkdownString {
     hover.appendText(`${line.author} <${line.email}>\n${new Date(line.date).toLocaleString()}\n${line.hash}`);
     hover.appendMarkdown('\n\n'); hover.appendText(commit?.message ?? line.subject);
-    const reveal = encodeURIComponent(JSON.stringify([{ repositoryUri, commit: line.hash }]));
-    const diff = encodeURIComponent(JSON.stringify([{ repositoryUri, commit: line.hash, filePath: line.filename, line: line.originalLine }]));
-    hover.appendMarkdown(`\n\n[${t('View in Git Views', '在 Git Views 中查看')}](command:gitViews.revealCommit?${reveal}) · [${t('View file diff', '查看此文件差异')}](command:gitViews.revealCommit?${diff})`);
+    const reveal = commandUri('gitViews.revealCommit', [{ repositoryUri, commit: line.hash }]);
+    const diff = commandUri('gitViews.revealCommit', [{ repositoryUri, commit: line.hash, filePath: line.filename, line: line.originalLine }]);
+    hover.appendMarkdown(`\n\n[${t('View in Git Views', '在 Git Views 中查看')}](${reveal}) · [${t('View file diff', '查看此文件差异')}](${diff})`);
     return hover;
   }
 

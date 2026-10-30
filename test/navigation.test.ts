@@ -7,7 +7,8 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import type * as VSCode from 'vscode';
 import { Repositories, type GitAPI } from '../src/repositories';
-import { HistoryView } from '../src/historyView';
+import { HistoryView, type RevealCommitArgs } from '../src/historyView';
+import { commandUri } from '../src/core/commandUri';
 import { GitDocuments } from '../src/documents';
 import { TerminalCommits } from '../src/terminal';
 import { calls, createView, EventEmitter, inputs, Uri, warnings } from './vscodeMock';
@@ -21,7 +22,7 @@ let view: ReturnType<typeof createView>;
 let id: string;
 const logs: string[] = [];
 before(async () => {
-  root = mkdtempSync(path.join(os.tmpdir(), 'gitviews-nav-'));
+  root = mkdtempSync(path.join(os.tmpdir(), 'gitviews-nav-中文 space %25 ()-'));
   const execute = promisify(execFile);
   const git = async (...args: string[]) => (await execute('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' })).stdout.trim();
   await git('init', '-q', '--initial-branch=main');
@@ -42,7 +43,7 @@ test('jumping beyond the loaded page reveals target details without opening a di
   await history.refresh();
   assert.equal(view.messages.at(-1)?.commits.length, 20);
   calls.length = 0;
-  await history.reveal({ repositoryUri: id, commit: hashes[0].slice(0, 8) });
+  await revealFromLink({ repositoryUri: id, commit: hashes[0].slice(0, 8) });
   const message = view.messages.at(-1)!;
   assert.equal(message.selected, hashes[0]);
   assert.equal(message.contextHash, hashes[0]);
@@ -56,7 +57,7 @@ test('returning from context restores history and later jumps can open a file di
   await until(() => !view.messages.at(-1)?.loading && view.messages.at(-1)?.commits.length === 20);
   assert.equal(view.messages.at(-1)?.contextHash, undefined);
   calls.length = 0;
-  await history.reveal({ repositoryUri: id, commit: hashes[24], filePath: 'file.txt', line: 1 });
+  await revealFromLink({ repositoryUri: id, commit: hashes[24], filePath: 'file.txt', line: 1 });
   const diff = calls.find(call => call.id === 'vscode.diff');
   assert.ok(diff);
   const [left, right] = diff.args as [Uri, Uri];
@@ -112,6 +113,13 @@ test('a newer navigation wins when commit lookups finish out of order', async ()
     assert.equal(view.messages.at(-1)?.details?.commit.hash, hashes[24]);
   } finally { repository.git.resolveCommit = resolve; }
 });
+
+async function revealFromLink(args: RevealCommitArgs): Promise<void> {
+  const link = commandUri('gitViews.revealCommit', [args]);
+  const query = decodeURIComponent(link.slice(link.indexOf('?') + 1));
+  const [decoded] = JSON.parse(decodeURIComponent(query)) as RevealCommitArgs[];
+  await history.reveal(decoded);
+}
 
 async function until(predicate: () => boolean): Promise<void> {
   const start = Date.now();

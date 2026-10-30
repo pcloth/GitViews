@@ -2,7 +2,7 @@
   "name": "gitviews-sidebar",
   "displayName": "GitViews Sidebar",
   "description": "GitViews Sidebar brings Git graph and commit history to the sidebar, with inline blame, commit diffs, and clickable terminal commit links.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "pcloth",
   "license": "MIT",
   "icon": "media/marketplace-icon.png",

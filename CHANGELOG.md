@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- Fix inline blame hover links incorrectly reporting that the repository is closed when repository URIs contain encoded Windows drive letters or other escaped characters.
+- Preserve filenames containing percent signs or parentheses when opening file diffs from blame hovers.
+
 ## 1.0.2
 
 - Add three Chinese feature illustrations to the README: sidebar commit history, inline blame, and integrated terminal navigation.
