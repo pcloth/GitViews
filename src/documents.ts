@@ -7,18 +7,31 @@ export class GitDocuments implements vscode.TextDocumentContentProvider {
   static readonly scheme = 'git-views';
   constructor(private readonly repositories: Repositories) {}
 
+  static snapshot(uri: vscode.Uri): { repositoryId: string; hash: string; filename: string } | undefined {
+    if (uri.scheme !== GitDocuments.scheme) return;
+    try {
+      const data: unknown = JSON.parse(uri.query);
+      if (!data || typeof data !== 'object') return;
+      const { repository, hash, filename } = data as Record<string, unknown>;
+      if (typeof repository === 'string' && typeof hash === 'string' && typeof filename === 'string') {
+        return { repositoryId: repository, hash, filename };
+      }
+    } catch {
+      return;
+    }
+  }
+
   uri(repository: Repository, hash: string | undefined, filename: string): vscode.Uri {
     // A readable path keeps language detection and editor titles useful.
     return vscode.Uri.from({ scheme: GitDocuments.scheme, path: `/${filename}`, query: JSON.stringify({ repository: repository.id, hash: hash ?? '', filename }) });
   }
 
   async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
-    const data: unknown = JSON.parse(uri.query);
-    if (!data || typeof data !== 'object') throw new Error('Invalid Git document.');
-    const { repository: id, hash, filename } = data as Record<string, unknown>;
-    if (typeof id !== 'string' || typeof hash !== 'string' || typeof filename !== 'string') throw new Error('Invalid Git document.');
+    const snapshot = GitDocuments.snapshot(uri);
+    if (!snapshot) throw new Error('Invalid Git document.');
+    const { repositoryId, hash, filename } = snapshot;
     if (!hash) return '';
-    const repository = this.repositories.get(id);
+    const repository = this.repositories.get(repositoryId);
     if (!repository) throw new Error(t('Repository is no longer open.', '仓库已关闭。'));
     const abort = new AbortController();
     const subscription = token.onCancellationRequested(() => abort.abort());

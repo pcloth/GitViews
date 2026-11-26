@@ -116,6 +116,16 @@ test('blame uses unsaved document contents and original rename paths', async () 
   assert.equal(lines.get(3)?.author, 'Test Author');
 });
 
+test('historical blame uses each snapshot’s revision and path across a rename', async () => {
+  const [before, after] = await Promise.all([
+    service.blameAtRevision(first, 'file.txt'),
+    service.blameAtRevision(renamed, 'renamed.txt')
+  ]);
+  assert.equal(before.get(2)?.hash, first);
+  assert.equal(after.get(2)?.hash, second);
+  assert.equal(after.get(2)?.filename, 'file.txt');
+});
+
 test('blame decodes unusual filenames', { skip: process.platform === 'win32' ? 'Windows disallows quotes and control characters in filenames.' : false }, async () => {
   // This file still exists in feature, while it was deleted in main.
   const name = 'name\n"quote".txt';

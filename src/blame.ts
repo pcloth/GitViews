@@ -3,6 +3,7 @@ import type { BlameLine, Commit } from './core/types';
 import { Repositories } from './repositories';
 import { isChinese, t } from './i18n';
 import { commandUri } from './core/commandUri';
+import { GitDocuments } from './documents';
 
 export class BlameController implements vscode.Disposable {
   private readonly decoration = vscode.window.createTextEditorDecorationType({
@@ -14,13 +15,15 @@ export class BlameController implements vscode.Disposable {
   private readonly commits = new Map<string, Commit>();
   private timer?: ReturnType<typeof setTimeout>;
   private abort?: AbortController;
-  private generation = 0;
-  private editor?: vscode.TextEditor;
+  private readonly decorated = new Set<vscode.TextEditor>();
 
   constructor(private readonly repositories: Repositories, private readonly context: vscode.ExtensionContext, private readonly output: vscode.OutputChannel) {
     this.subscriptions.push(
       vscode.window.onDidChangeActiveTextEditor(() => this.schedule()),
-      vscode.window.onDidChangeTextEditorSelection(event => { if (event.textEditor === vscode.window.activeTextEditor) this.schedule(); }),
+      vscode.window.onDidChangeVisibleTextEditors(() => this.schedule()),
+      vscode.window.onDidChangeTextEditorSelection(event => {
+        if (event.textEditor === vscode.window.activeTextEditor || event.textEditor.document.uri.scheme === GitDocuments.scheme) this.schedule();
+      }),
       vscode.workspace.onDidChangeTextDocument(event => { if (event.document === vscode.window.activeTextEditor?.document) this.schedule(); }),
       vscode.workspace.onDidCloseTextDocument(document => { for (const key of this.cache.keys()) if (key.includes(document.uri.toString())) this.cache.delete(key); }),
       vscode.workspace.onDidChangeConfiguration(event => {
@@ -34,32 +37,47 @@ export class BlameController implements vscode.Disposable {
   }
 
   private schedule(): void {
-    clearTimeout(this.timer); this.abort?.abort(); this.generation++;
-    this.editor?.setDecorations(this.decoration, []);
+    clearTimeout(this.timer); this.abort?.abort();
+    const visible = vscode.window.visibleTextEditors;
+    for (const editor of this.decorated) {
+      if (visible.includes(editor)) editor.setDecorations(this.decoration, []);
+    }
+    this.decorated.clear();
     this.timer = setTimeout(() => { void this.update(); }, 200);
   }
 
   private async update(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || !vscode.workspace.getConfiguration('gitViews', editor.document.uri).get<boolean>('blame.enabled', true)) return;
-    const document = editor.document;
-    const repository = this.repositories.forUri(document.uri);
-    if (!repository || document.isUntitled || document.lineCount > 50_000) return;
-    const text = document.getText();
-    if (Buffer.byteLength(text, 'utf8') > 2 * 1024 * 1024 || text.includes('\0')) return;
+    const editors = new Set(vscode.window.visibleTextEditors.filter(editor => editor.document.uri.scheme === GitDocuments.scheme));
+    const active = vscode.window.activeTextEditor;
+    if (active) editors.add(active);
     const abort = this.abort = new AbortController();
-    const generation = this.generation;
-    this.editor = editor;
+    await Promise.all([...editors].map(editor => this.updateEditor(editor, abort.signal)));
+  }
+
+  private async updateEditor(editor: vscode.TextEditor, signal: AbortSignal): Promise<void> {
+    const document = editor.document;
+    const snapshot = GitDocuments.snapshot(document.uri);
+    if (snapshot && !snapshot.hash) return;
+    const repository = snapshot ? this.repositories.get(snapshot.repositoryId) : this.repositories.forUri(document.uri);
+    if (!repository || document.isUntitled || document.lineCount > 50_000) return;
+    const resource = snapshot ? vscode.Uri.joinPath(repository.uri, snapshot.filename) : document.uri;
+    const config = vscode.workspace.getConfiguration('gitViews', resource);
+    if (!config.get<boolean>('blame.enabled', true)) return;
+    const text = document.getText();
+    if (!text || Buffer.byteLength(text, 'utf8') > 2 * 1024 * 1024 || text.includes('\0')) return;
+    const index = editor.selection.active.line;
     const key = `${repository.id}:${document.uri.toString()}:${document.version}`;
     try {
       let lines = this.cache.get(key);
       if (!lines) {
-        lines = await repository.git.blame(document.uri.fsPath, text, abort.signal);
-        if (generation !== this.generation || abort.signal.aborted) return;
+        lines = snapshot
+          ? await repository.git.blameAtRevision(snapshot.hash, snapshot.filename, signal)
+          : await repository.git.blame(document.uri.fsPath, text, signal);
+        if (signal.aborted) return;
         this.cache.set(key, lines);
         if (this.cache.size > 8) this.cache.delete(this.cache.keys().next().value!);
       }
-      const line = lines.get(editor.selection.active.line + 1);
+      const line = lines.get(index + 1);
       if (!line) return;
       const hover = new vscode.MarkdownString();
       hover.isTrusted = { enabledCommands: ['gitViews.revealCommit'] };
@@ -68,34 +86,34 @@ export class BlameController implements vscode.Disposable {
         label = t('Not committed yet', '尚未提交'); hover.appendText(label);
       } else {
         const values: Record<string, string> = { author: line.author, dateAgo: relativeDate(line.date), date: new Date(line.date).toLocaleString(), subject: line.subject, sha: line.hash.slice(0, 8) };
-        const template = vscode.workspace.getConfiguration('gitViews', document.uri).get<string>('blame.template', '${author}, ${dateAgo} • ${subject}');
+        const template = config.get<string>('blame.template', '${author}, ${dateAgo} • ${subject}');
         label = template.replace(/\$\{(author|dateAgo|date|subject|sha)\}/g, (_, name: string) => values[name]).replace(/[\r\n\t]/g, ' ');
-        this.render(editor, label, this.hover(line, repository.id, hover));
+        this.render(editor, index, label, this.hover(line, repository.id, hover));
         const commitKey = `${repository.id}:${line.hash}`;
         let commit = this.commits.get(commitKey);
         if (!commit) {
-          commit = await repository.git.commit(line.hash, abort.signal);
-          if (generation !== this.generation || abort.signal.aborted) return;
+          commit = await repository.git.commit(line.hash, signal);
+          if (signal.aborted) return;
           this.commits.set(commitKey, commit);
           if (this.commits.size > 30) this.commits.delete(this.commits.keys().next().value!);
         }
         const fullHover = this.hover(line, repository.id, new vscode.MarkdownString(), commit);
         fullHover.isTrusted = { enabledCommands: ['gitViews.revealCommit'] };
-        this.render(editor, label, fullHover);
+        this.render(editor, index, label, fullHover);
         return;
       }
-      if (generation === this.generation && !abort.signal.aborted) this.render(editor, label, hover);
+      this.render(editor, index, label, hover);
     } catch (error) {
-      if (abort.signal.aborted) return;
+      if (signal.aborted) return;
       // Untracked files and unborn repositories have no historical blame.
       if (error instanceof Error && !/no such path|no such ref|not exist|bad revision|no commits|not a git repository/i.test(error.message)) this.output.appendLine(`Blame: ${error.message}`);
     }
   }
 
-  private render(editor: vscode.TextEditor, label: string, hover: vscode.MarkdownString): void {
-    const index = editor.selection.active.line;
+  private render(editor: vscode.TextEditor, index: number, label: string, hover: vscode.MarkdownString): void {
     const text = editor.document.lineAt(index).text;
     editor.setDecorations(this.decoration, [{ range: new vscode.Range(index, 0, index, Math.max(1, text.length)), renderOptions: { after: { contentText: label.length > 180 ? `${label.slice(0, 177)}…` : label } }, hoverMessage: hover }]);
+    this.decorated.add(editor);
   }
 
   private hover(line: BlameLine, repositoryUri: string, hover: vscode.MarkdownString, commit?: Commit): vscode.MarkdownString {

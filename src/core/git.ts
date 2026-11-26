@@ -112,6 +112,13 @@ export class GitService {
     return parseBlame(raw.toString('utf8'));
   }
 
+  async blameAtRevision(hash: string, filename: string, signal?: AbortSignal): Promise<Map<number, BlameLine>> {
+    this.assertRevision(hash);
+    const relative = this.relativePath(filename);
+    const raw = await this.run(['blame', '--line-porcelain', hash, '--', relative], undefined, signal);
+    return parseBlame(raw.toString('utf8'));
+  }
+
   relativePath(filename: string): string {
     const relative = path.isAbsolute(filename) ? path.relative(this.root, filename) : filename;
     if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative) || relative.includes('\0')) {
